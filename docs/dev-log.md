@@ -1,0 +1,1 @@
+## .env 파일에 gemini api 키 저장

@@ -1,0 +1,17 @@
+# 1. 민감한 정보 (API 키 등)
+.env
+
+# 2. 의존성 라이브러리 (용량이 크고 재설치가 가능함)
+node_modules/
+dist/
+build/
+
+# 3. 운영체제 설정 파일
+.DS_Store
+Thumbs.db
+
+# 4. 로그 및 임시 파일
+npm-debug.log*
+yarn-error.log*
+.log
+/*.env
