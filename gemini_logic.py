@@ -14,7 +14,7 @@ PROMPT_TEMPLATE = (
 
 def refine_text(user_text: str) -> str:
     response = client.models.generate_content(
-        model="gemini-2.0-flash", 
+        model="gemini-1.5-flash", 
         contents=PROMPT_TEMPLATE.format(text=user_text)
     )
     
