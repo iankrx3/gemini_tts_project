@@ -43,17 +43,17 @@ def generate_tts():
         mp3_fp = BytesIO()
         tts.write_to_fp(mp3_fp)
         mp3_fp.seek(0)
-        return send_file(mp3_fp, mimetype='aduio/mpeg')
+        return send_file(mp3_fp, mimetype='audio/mpeg')
 
     except Exception as e:
         return jsonify({"error": f"TTS 변환 오류: {str(e)}"}), 500
 
-    return jsonify({
-        "message": "성공",
-        "original_text": user_text,
-        "ai_text": ai_text,
-        "audio_url": f"/static/audio/{filename}"
-    })
+    #return jsonify({
+    #    "message": "성공",
+    #    "original_text": user_text,
+    #    "ai_text": ai_text,
+    #    "audio_url": f"/static/audio/{filename}"
+    #})
 
 
 if __name__ == "__main__":
