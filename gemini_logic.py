@@ -12,6 +12,6 @@ PROMPT_TEMPLATE = (
 )
 
 def refine_text(user_text: str) -> str:
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
     response = model.generate_content(PROMPT_TEMPLATE.format(text=user_text))
     return response.text.strip()
