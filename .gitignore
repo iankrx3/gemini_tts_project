@@ -15,3 +15,7 @@ npm-debug.log*
 yarn-error.log*
 .log
 /*.env
+
+# 5. pycache 제외
+__pycache__/
+*.pyc
