@@ -266,72 +266,63 @@
 
   <script>
     async function generate() {
-  const text = document.getElementById("inputText").value.trim();
-  const btn = document.getElementById("generateBtn");
-  const errorMsg = document.getElementById("errorMsg");
-  const result = document.getElementById("result");
+      const text = document.getElementById("inputText").value.trim();
+      const btn = document.getElementById("generateBtn");
+      const errorMsg = document.getElementById("errorMsg");
+      const result = document.getElementById("result");
 
-  errorMsg.style.display = "none";
-  result.style.display = "none";
+      errorMsg.style.display = "none";
+      result.style.display = "none";
 
-  if (!text) {
-    showError("Please enter some text.");
-    return;
-  }
+      if (!text) {
+        showError("Please enter some text.");
+        return;
+      }
 
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Generating speech...';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating speech...';
 
-  try {
-    const res = await fetch("/generate-tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
+      try {
+        const res = await fetch("/generate-tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "An unknown error occurred.");
+          return;
+        }
+
+        document.getElementById("aiText").textContent = data.ai_text;
+        const audio = document.getElementById("audioPlayer");
+        audio.src = data.audio_url + "?t=" + Date.now();
+        audio.load();
+
+        result.style.display = "block";
+      } catch (e) {
+        showError("Failed to connect to the server. Please check your network connection.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "✨ Generate Speech";
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("errorMsg");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    // Ctrl + Enter 지원
+    document.getElementById("inputText").addEventListener("keydown", e => {
+      if (e.key === "Enter" && e.ctrlKey) {
+        e.preventDefault();
+        generate();
+      }
     });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      showError(data.error || "An unknown error occurred.");
-      return;
-    }
-
-    document.getElementById("aiText").textContent = data.ai_text;
-
-    // base64 → Blob → Object URL로 재생
-    const binary = atob(data.audio_b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: "audio/mpeg" });
-    const audioUrl = URL.createObjectURL(blob);
-
-    const audio = document.getElementById("audioPlayer");
-    audio.src = audioUrl;
-    audio.load();
-
-    result.style.display = "block";
-  } catch (e) {
-    showError("Failed to connect to the server. Please check your network connection.");
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = "✨ Generate Speech";
-  }
-}
-
-function showError(msg) {
-  const el = document.getElementById("errorMsg");
-  el.textContent = msg;
-  el.style.display = "block";
-}
-
-document.getElementById("inputText").addEventListener("keydown", e => {
-  if (e.key === "Enter" && e.ctrlKey) {
-    e.preventDefault();
-    generate();
-  }
-});
   </script>
 </body>
 </html>

@@ -6,7 +6,7 @@ from gtts import gTTS
 from gemini_logic import refine_text
 
 load_dotenv()
-app = Flask(__name__, static_folder="../static")
+app = Flask(__name__, static_folder="static")
 
 AUDIO_DIR = os.path.join("static", "audio")
 os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -14,7 +14,7 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 
 @app.route("/")
 def index():
-    return send_from_directory("../static", "index.html")
+    return send_from_directory("static", "index.html")
 
 
 @app.route("/generate-tts", methods=["POST"])
