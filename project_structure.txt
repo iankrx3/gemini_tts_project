@@ -1,0 +1,11 @@
+gemini_tts_project/
+├── api/
+│   └── index.py          # (수정) app.py를 이 위치로 옮기고 이름을 변경
+├── static/               # 기존과 동일 (프론트엔드 파일들)
+│   ├── index.html
+│   └── audio/            # 주의: 서버리스 환경이라 파일 저장이 유지되지 않음
+├── gemini_logic.py       # (이동) 필요시 api/ 내부로 이동하거나 루트 유지
+├── vercel.json           # (추가) 배포 설정 파일
+├── requirements.txt      # (수정) 필수 패키지만 포함
+├── .env                  # (로컬용) Vercel 대시보드에 직접 입력 예정
+└── .gitignore
