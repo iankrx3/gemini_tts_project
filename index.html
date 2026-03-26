@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini TTS</title>
+  <style>
+    *, *::before, *::after { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f17 100%);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #e0e0ff;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 660px;
+      background: rgba(26, 26, 42, 0.95);
+      border: 1px solid rgba(124, 106, 247, 0.2);
+      border-radius: 28px;
+      padding: 48px 44px;
+      box-shadow: 
+        0 30px 80px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(124, 106, 247, 0.15) inset;
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 카드 위쪽 빛 효과 */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(124, 106, 247, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 36px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      width: 52px; 
+      height: 52px;
+      background: linear-gradient(135deg, #7c6af7, #3ecfcf, #ff6bcf);
+      border-radius: 16px;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 8px 20px rgba(124, 106, 247, 0.4);
+    }
+
+    h1 { 
+      font-size: 1.65rem; 
+      font-weight: 700; 
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #e0e0ff, #c8c8ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle { 
+      font-size: 0.82rem; 
+      color: #a0a0cc; 
+      margin-top: 4px;
+      letter-spacing: 0.2px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #8a7eff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 158px;
+      background: rgba(18, 18, 32, 0.9);
+      border: 1.5px solid rgba(46, 46, 66, 0.8);
+      border-radius: 16px;
+      color: #e8e8ff;
+      font-size: 1rem;
+      padding: 18px 20px;
+      resize: vertical;
+      outline: none;
+      transition: all 0.3s ease;
+      line-height: 1.65;
+      font-family: inherit;
+    }
+
+    textarea:focus { 
+      border-color: #7c6af7;
+      box-shadow: 0 0 0 4px rgba(124, 106, 247, 0.15);
+      background: rgba(18, 18, 32, 1);
+    }
+
+    textarea::placeholder { 
+      color: #555577; 
+    }
+
+    .btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #7c6af7, #5a4cff, #3ecfcf);
+      border: none;
+      border-radius: 16px;
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.4px;
+      box-shadow: 0 10px 30px rgba(124, 106, 247, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(124, 106, 247, 0.5);
+      opacity: 0.95;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 스피너 */
+    .spinner {
+      display: inline-block;
+      width: 18px; 
+      height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
+    }
+
+    /* 결과 영역 */
+    .result {
+      margin-top: 32px;
+      display: none;
+      animation: fadeUp 0.4s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-box {
+      background: rgba(18, 18, 32, 0.95);
+      border: 1px solid rgba(46, 46, 66, 0.8);
+      border-radius: 16px;
+      padding: 20px;
+      font-size: 0.96rem;
+      line-height: 1.7;
+      color: #d0d0ff;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .player-wrap {
+      background: rgba(18, 18, 32, 0.95);
+      border: 1px solid rgba(46, 46, 66, 0.8);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .player-wrap audio {
+      width: 100%;
+      height: 48px;
+      outline: none;
+    }
+
+    .error-msg {
+      margin-top: 16px;
+      background: rgba(255, 80, 80, 0.1);
+      border: 1px solid rgba(255, 80, 80, 0.3);
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 0.9rem;
+      color: #ff8080;
+      display: none;
+    }
+
+    /* 미세한 장식선 */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124,106,247,0.3), transparent);
+      margin: 28px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="logo">🎙</div>
+      <div>
+        <h1>Gemini TTS</h1>
+        <div class="subtitle">AI가 자연스럽게 다듬어 음성으로 만들어드려요</div>
+      </div>
+    </div>
+
+    <label for="inputText">입력 텍스트</label>
+    <textarea id="inputText" placeholder="여기에 읽어주고 싶은 텍스트를 입력해주세요..."></textarea>
+
+    <button class="btn" id="generateBtn" onclick="generate()">
+      ✨ 음성 생성하기
+    </button>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="result" id="result">
+      <div class="divider"></div>
+      <label>AI가 정제한 텍스트</label>
+      <div class="result-box" id="aiText"></div>
+      
+      <label>생성된 음성</label>
+      <div class="player-wrap">
+        <audio id="audioPlayer" controls></audio>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function generate() {
+      const text = document.getElementById("inputText").value.trim();
+      const btn = document.getElementById("generateBtn");
+      const errorMsg = document.getElementById("errorMsg");
+      const result = document.getElementById("result");
+
+      errorMsg.style.display = "none";
+      result.style.display = "none";
+
+      if (!text) {
+        showError("텍스트를 입력해주세요.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> 음성 생성 중...';
+
+      try {
+        const res = await fetch("/generate-tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "알 수 없는 오류가 발생했습니다.");
+          return;
+        }
+
+        document.getElementById("aiText").textContent = data.ai_text;
+        const audio = document.getElementById("audioPlayer");
+        audio.src = data.audio_url + "?t=" + Date.now();
+        audio.load();
+
+        result.style.display = "block";
+      } catch (e) {
+        showError("서버에 연결할 수 없습니다. 네트워크를 확인해주세요.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "✨ 음성 생성하기";
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById("errorMsg");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    // Ctrl + Enter 지원
+    document.getElementById("inputText").addEventListener("keydown", e => {
+      if (e.key === "Enter" && e.ctrlKey) {
+        e.preventDefault();
+        generate();
+      }
+    });
+  </script>
+</body>
+</html>

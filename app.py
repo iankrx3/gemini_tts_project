@@ -1,30 +1,52 @@
 import os
-from flask import Flask, request, send_file
+import uuid
+from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
-import google.generativeai as genai
 from gtts import gTTS
+from gemini_logic import refine_text
 
 load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static")
 
-# Gemini 설정
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
+AUDIO_DIR = os.path.join("static", "audio")
+os.makedirs(AUDIO_DIR, exist_ok=True)
 
-@app.route('/generate-tts', methods=['POST'])
+
+@app.route("/")
+def index():
+    return send_from_directory("static", "index.html")
+
+
+@app.route("/generate-tts", methods=["POST"])
 def generate_tts():
-    user_text = request.json.get('text')
-    
-    # 1. Gemini로 텍스트 생성 (또는 입력된 텍스트 정제)
-    response = model.generate_content(f"다음 내용을 자연스러운 구어체로 요약해줘: {user_text}")
-    ai_text = response.text
+    data = request.get_json()
+    if not data or not data.get("text", "").strip():
+        return jsonify({"error": "텍스트를 입력해주세요."}), 400
+
+    user_text = data["text"].strip()
+
+    # 1. Gemini로 텍스트 정제
+    try:
+        ai_text = refine_text(user_text)
+    except Exception as e:
+        return jsonify({"error": f"Gemini API 오류: {str(e)}"}), 500
 
     # 2. gTTS로 음성 변환
-    tts = gTTS(text=ai_text, lang='ko')
-    audio_path = "static/audio/result.mp3"
-    tts.save(audio_path)
+    try:
+        filename = f"{uuid.uuid4().hex}.mp3"
+        audio_path = os.path.join(AUDIO_DIR, filename)
+        tts = gTTS(text=ai_text, lang="ko")
+        tts.save(audio_path)
+    except Exception as e:
+        return jsonify({"error": f"TTS 변환 오류: {str(e)}"}), 500
 
-    return {"message": "성공", "text": ai_text, "audio_url": "/static/audio/result.mp3"}
+    return jsonify({
+        "message": "성공",
+        "original_text": user_text,
+        "ai_text": ai_text,
+        "audio_url": f"/static/audio/{filename}"
+    })
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)
