@@ -43,19 +43,22 @@ def generate_audio():
 
     text = data["text"].strip()
 
-    # gTTS로 음성 변환 → 메모리 버퍼에 저장
+    # gTTS로 음성 변환 → 메모리 버퍼에 저장 후 bytes로 반환
     try:
         tts = gTTS(text=text, lang="ko")
         buf = io.BytesIO()
         tts.write_to_fp(buf)
-        buf.seek(0)
+        audio_bytes = buf.getvalue()  # seek 없이 바이트 직접 추출
     except Exception as e:
         return jsonify({"error": f"TTS 변환 오류: {str(e)}"}), 500
 
     return Response(
-        buf,
+        audio_bytes,
         mimetype="audio/mpeg",
-        headers={"Content-Disposition": "inline; filename=speech.mp3"}
+        headers={
+            "Content-Disposition": "inline; filename=speech.mp3",
+            "Content-Length": str(len(audio_bytes)),  # 브라우저가 길이를 알아야 재생 가능
+        }
     )
 
 

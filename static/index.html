@@ -283,6 +283,7 @@
       btn.innerHTML = '<span class="spinner"></span> Generating speech...';
 
       try {
+        // 1단계: Gemini로 텍스트 정제
         const res = await fetch("/generate-tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -297,8 +298,26 @@
         }
 
         document.getElementById("aiText").textContent = data.ai_text;
+
+        // 2단계: 정제된 텍스트로 오디오 스트리밍
+        const audioRes = await fetch("/generate-audio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: data.ai_text })
+        });
+
+        if (!audioRes.ok) {
+          const errData = await audioRes.json();
+          showError(errData.error || "오디오 생성 중 오류가 발생했습니다.");
+          return;
+        }
+
+        const audioBlob = await audioRes.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
         const audio = document.getElementById("audioPlayer");
-        audio.src = data.audio_url + "?t=" + Date.now();
+        if (audio._prevUrl) URL.revokeObjectURL(audio._prevUrl); // 이전 URL 메모리 해제
+        audio._prevUrl = audioUrl;
+        audio.src = audioUrl;
         audio.load();
 
         result.style.display = "block";
