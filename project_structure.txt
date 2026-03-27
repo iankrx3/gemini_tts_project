@@ -1,7 +1,7 @@
 gemini_tts_project/
 ├── .git/
 ├── .venv/              # 파이썬 가상환경 (Git에 올리지 않음)
-├── .gitignore          # __pycache__/, .env 추가
+├── .gitignore          # .env 추가
 ├── .env                # GEMINI_API_KEY 저장
 ├── requirements.txt    # 설치된 라이브러리 목록 (pip freeze)
 ├── README.md           # 프로젝트 진행 상황
