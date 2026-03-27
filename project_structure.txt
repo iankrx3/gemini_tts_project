@@ -8,6 +8,4 @@ gemini_tts_project/
 ├── docs/               # 개발 일지 (dev-log.md)
 ├── app.py              # 메인 실행 파일 (Server)
 ├── gemini_logic.py     # Gemini API 호출 로직
-└── static/             # CSS, JS, 생성된 음성(.mp3) 파일 저장
-    ├── index.html           # 프론트엔드
-    └── audio/
+└── index.html          # 프론트엔드
