@@ -16,3 +16,4 @@ yarn-error.log*
 .log
 /*.env
 /static/audio
+/__pycache__
