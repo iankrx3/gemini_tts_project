@@ -1,10 +1,9 @@
 import os
 import uuid
-from flask import Flask, request, jsonify, send_from_directory, send_file
+from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 from gtts import gTTS
 from gemini_logic import refine_text
-from io import BytesIO
 
 load_dotenv()
 app = Flask(__name__, static_folder="static")
@@ -35,25 +34,18 @@ def generate_tts():
     # 2. gTTS로 음성 변환
     try:
         filename = f"{uuid.uuid4().hex}.mp3"
-        #audio_path = os.path.join(AUDIO_DIR, filename)
+        audio_path = os.path.join(AUDIO_DIR, filename)
         tts = gTTS(text=ai_text, lang="ko")
-        #tts.save(audio_path)
-
-        #파일을 저장하지 않고, 메모리에 생성(vercel 배포용)
-        mp3_fp = BytesIO()
-        tts.write_to_fp(mp3_fp)
-        mp3_fp.seek(0)
-        return send_file(mp3_fp, mimetype='audio/mpeg')
-
+        tts.save(audio_path)
     except Exception as e:
         return jsonify({"error": f"TTS 변환 오류: {str(e)}"}), 500
 
-    #return jsonify({
-    #    "message": "성공",
-    #    "original_text": user_text,
-    #    "ai_text": ai_text,
-    #    "audio_url": f"/static/audio/{filename}"
-    #})
+    return jsonify({
+        "message": "성공",
+        "original_text": user_text,
+        "ai_text": ai_text,
+        "audio_url": f"/static/audio/{filename}"
+    })
 
 
 if __name__ == "__main__":
