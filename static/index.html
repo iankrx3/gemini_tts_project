@@ -191,29 +191,84 @@
     </div>
   </div>
 
-  <script>
-    function generate() {
-      const text = document.getElementById('inputText').value.trim();
-      const errorMsg = document.getElementById('errorMsg');
-      const result = document.getElementById('result');
+<script>
+    async function generate() {
+      const text = document.getElementById("inputText").value.trim();
+      const btn = document.getElementById("generateBtn");
+      const errorMsg = document.getElementById("errorMsg");
+      const result = document.getElementById("result");
+
+      errorMsg.style.display = "none";
+      result.style.display = "none";
 
       if (!text) {
-        errorMsg.textContent = "Please enter some text to convert.";
+        showError("Please enter some text.");
         return;
       }
 
-      errorMsg.textContent = "";
-      result.style.display = "block";
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating speech...';
 
-      // Example: Simulate refined text (you can replace with real AI logic later)
-      document.getElementById('aiText').textContent = text.length > 200 
-        ? text.substring(0, 200) + "..." 
-        : text;
+      try {
+        // 1단계: Gemini로 텍스트 정제
+        const res = await fetch("/generate-tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
 
-      // For demo - you would replace this with actual TTS API call
-      console.log("Generating speech for:", text);
+        const data = await res.json();
+
+        if (!res.ok) {
+          showError(data.error || "An unknown error occurred.");
+          return;
+        }
+
+        document.getElementById("aiText").textContent = data.ai_text;
+
+        // 2단계: 정제된 텍스트로 오디오 스트리밍
+        const audioRes = await fetch("/generate-audio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: data.ai_text })
+        });
+
+        if (!audioRes.ok) {
+          const errData = await audioRes.json();
+          showError(errData.error || "오디오 생성 중 오류가 발생했습니다.");
+          return;
+        }
+
+        const audioBlob = await audioRes.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = document.getElementById("audioPlayer");
+        if (audio._prevUrl) URL.revokeObjectURL(audio._prevUrl); // 이전 URL 메모리 해제
+        audio._prevUrl = audioUrl;
+        audio.src = audioUrl;
+        audio.load();
+
+        result.style.display = "block";
+      } catch (e) {
+        showError("Failed to connect to the server. Please check your network connection.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "✨ Generate Speech";
+      }
     }
-  </script>
 
+    function showError(msg) {
+      const el = document.getElementById("errorMsg");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    // Ctrl + Enter 지원
+    document.getElementById("inputText").addEventListener("keydown", e => {
+      if (e.key === "Enter" && e.ctrlKey) {
+        e.preventDefault();
+        generate();
+      }
+    });
+  </script>
 </body>
 </html>
